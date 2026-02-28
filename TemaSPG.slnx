@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="TemaSPG/TemaSPG.vcxproj" Id="b0a1d881-4919-4d88-b20c-0fa0a604e8fb" />
+</Solution>
