@@ -24,17 +24,17 @@ GLuint texturePole, texturePoleTop;
 GLuint textureHeadlight;
 
 GLuint loadTexture(const char* path) {
-    GLuint textureID;
-    int nrChannels, width, height;
+	GLuint textureID;
+	int nrChannels, width, height;
 
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    unsigned char* data = stbi_load(path, &width, &height, &nrChannels, 0);
+	unsigned char* data = stbi_load(path, &width, &height, &nrChannels, 0);
     if (data) {
         GLenum fmt = (nrChannels == 4) ? GL_RGBA : GL_RGB;
         glTexImage2D(GL_TEXTURE_2D, 0, fmt, width, height, 0, fmt, GL_UNSIGNED_BYTE, data);
@@ -42,9 +42,9 @@ GLuint loadTexture(const char* path) {
     else {
         std::cout << "EROARE: nu pot incarca textura: " << path << std::endl;
     }
-    stbi_image_free(data);
+	stbi_image_free(data);
     glBindTexture(GL_TEXTURE_2D, 0);
-    return textureID;
+	return textureID;
 }
 
 void setupLighting() {
@@ -152,13 +152,13 @@ void drawSkyBox() {
 void drawGrass() {
     glEnable(GL_TEXTURE_2D);
     glColor3f(1, 1, 1);
-    glBindTexture(GL_TEXTURE_2D, grassTexture);
-    glBegin(GL_QUADS);
+	glBindTexture(GL_TEXTURE_2D, grassTexture);
+	glBegin(GL_QUADS);
     glTexCoord2f(0, 1); glVertex3f(-2, -0.5f, -2);
     glTexCoord2f(1, 1); glVertex3f(2, -0.5f, -2);
     glTexCoord2f(1, 0); glVertex3f(2, -0.5f, 2);
     glTexCoord2f(0, 0); glVertex3f(-2, -0.5f, 2);
-    glEnd();
+	glEnd();
 }
 
 void drawMountain(float x, float y, float z, float width, float height) {
@@ -182,7 +182,7 @@ void drawMountain(float x, float y, float z, float width, float height) {
     glTexCoord2f(0, 0); glVertex3f(x - width, y, z - width);
     glTexCoord2f(1, 0); glVertex3f(x - width, y, z + width);
     glEnd();
-}
+        }
 
 void drawRoad() {
     glBindTexture(GL_TEXTURE_2D, textureRoad1);
@@ -232,8 +232,8 @@ void drawRoad() {
     glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, -0.49f, -0.4f);
     glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -0.49f, -0.8f);
     glTexCoord2f(1.0f, 0.0f); glVertex3f(0.6f, -0.49f, -0.8f);
-    glEnd();
-}
+        glEnd();
+    }
 
 void drawTree(float baseX, float baseY, float baseZ, float trunkHeight, float trunkRadius) {
     glPushMatrix();
@@ -342,7 +342,7 @@ void display() {
     updateCamera();
 
     drawSkyBox();
-    drawGrass();
+	drawGrass();
     drawMountain(0.0f, -0.5f, 0.0f, 0.35f, 1.2f);
     drawRoad();
 
@@ -409,17 +409,17 @@ void keyboard(unsigned char key, int x, int y) {
 }
 
 void reshape(int w, int h) {
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(45.0, (double)w / (double)h, 0.1, 100.0);
-    glMatrixMode(GL_MODELVIEW);
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(45.0, (double)w / (double)h, 0.1, 100.0);
+	glMatrixMode(GL_MODELVIEW);
 }
 
 int main(int argc, char** argv) {
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(800, 600);
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+	glutInitWindowSize(800, 600);
     glutCreateWindow("Prezentare 2+3");
 
     glewInit();
@@ -431,7 +431,7 @@ int main(int argc, char** argv) {
     rightTexture = loadTexture("textures/sky_right.jpg");
     topTexture = loadTexture("textures/sky_top.jpg");
     bottomTexture = loadTexture("textures/sky_bottom.jpg");
-    grassTexture = loadTexture("textures/grass.jpg");
+	grassTexture = loadTexture("textures/grass.jpg");
     mountainTexture = loadTexture("textures/mountain.jpg");
     textureRoad1 = loadTexture("textures/street_3.jpg");
     textureCurve = loadTexture("textures/street_5.jpg");
@@ -444,11 +444,11 @@ int main(int argc, char** argv) {
     texturePoleTop = loadTexture("textures/lamp_pole.jpg");
     textureHeadlight = loadTexture("textures/headlight.jpg");
 
-    glutDisplayFunc(display);
-    glutReshapeFunc(reshape);
+	glutDisplayFunc(display);
+	glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
     glutPassiveMotionFunc(mouseMotion);
     glClearColor(0.2f, 0.5f, 0.8f, 1.0f);
-    glutMainLoop();
-    return 0;
+	glutMainLoop();
+	return 0;
 }
