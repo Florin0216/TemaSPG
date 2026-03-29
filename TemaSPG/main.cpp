@@ -23,6 +23,26 @@ GLuint textureBenchSeat, textureBenchLeg;
 GLuint texturePole, texturePoleTop;
 GLuint textureHeadlight;
 
+// Coordonate Copaci {x, y, z}
+float treeCoords[][3] = {
+    {-1.85f, -0.51f, -0.85f}, {-1.23f, -0.51f, 1.2f}, {-0.47f, -0.51f, 1.5f},
+    {0.56f, -0.51f, 1.45f}, {1.12f, -0.51f, 1.33f}, {-1.23f, -0.51f, -1.2f},
+    {-0.47f, -0.51f, -1.5f}, {0.56f, -0.51f, -1.45f}, {1.12f, -0.51f, -1.33f},
+    {1.7f, -0.51f, -1.2f}, {1.5f, -0.51f, -1.5f}, {-1.4f, -0.51f, -1.45f}, {-1.12f, -0.51f, -1.33f}
+};
+
+// Coordonate Bănci {x, y, z}
+float benchCoords[][3] = {
+    {0.25f, -0.5f, 0.9f}, {0.7f, -0.5f, 0.9f}, {0.0f, -0.5f, 0.9f},
+    {-0.25f, -0.5f, 0.9f}, {-0.7f, -0.5f, 0.9f}, {0.25f, -0.5f, -0.9f},
+    {0.7f, -0.5f, -0.9f}, {0.0f, -0.5f, -0.9f}, {-0.25f, -0.5f, -0.9f}, {-0.7f, -0.5f, -0.9f}
+};
+
+// Coordonate Stâlpi {x, y, z}
+float lampCoords[][3] = {
+    {0.4f, -0.4f, -0.9f}, {-0.4f, -0.4f, 0.9f}, {0.4f, -0.4f, 0.9f}
+};
+
 GLuint loadTexture(const char* path) {
 	GLuint textureID;
 	int nrChannels, width, height;
@@ -270,6 +290,36 @@ void drawTree(float baseX, float baseY, float baseZ, float trunkHeight, float tr
     glPopMatrix();
 }
 
+void drawTreeShadow(float baseX, float baseY, float baseZ, float trunkHeight, float trunkRadius) {
+    glPushMatrix();
+    glTranslatef(baseX, baseY, baseZ);
+
+    GLUquadric* qt = gluNewQuadric();
+    gluQuadricTexture(qt, GL_TRUE);
+    glPushMatrix();
+    glRotatef(-90, 1, 0, 0);
+    gluCylinder(qt, trunkRadius, trunkRadius, trunkHeight, 16, 4);
+    glPopMatrix();
+    gluDeleteQuadric(qt);
+
+    GLUquadric* ql = gluNewQuadric();
+    gluQuadricTexture(ql, GL_TRUE);
+    float f = trunkRadius / 0.03f;
+    float ty = trunkHeight;
+
+    glPushMatrix(); glTranslatef(0, ty + 0.01f * f, 0);
+    gluSphere(ql, 0.10f * f, 12, 12); glPopMatrix();
+    glPushMatrix(); glTranslatef(-0.10f * f, ty + 0.08f * f, 0);
+    gluSphere(ql, 0.08f * f, 12, 12); glPopMatrix();
+    glPushMatrix(); glTranslatef(0.10f * f, ty + 0.08f * f, 0);
+    gluSphere(ql, 0.08f * f, 12, 12); glPopMatrix();
+    glPushMatrix(); glTranslatef(0, ty + 0.16f * f, 0);
+    gluSphere(ql, 0.08f * f, 12, 12); glPopMatrix();
+
+    gluDeleteQuadric(ql);
+    glPopMatrix();
+}
+
 void drawBench(float x, float y, float z) {
     glPushMatrix();
     glTranslatef(x, y, z);
@@ -282,6 +332,22 @@ void drawBench(float x, float y, float z) {
     glutSolidCube(1); glPopMatrix();
 
     glBindTexture(GL_TEXTURE_2D, textureBenchLeg);
+    float px[] = { -0.06f, 0.06f,-0.06f, 0.06f };
+    float pz[] = { 0.03f, 0.03f,-0.03f,-0.03f };
+    for (int i = 0; i < 4; i++) {
+        glPushMatrix(); glTranslatef(px[i], -0.01f, pz[i]);
+        glScalef(0.015f, 0.05f, 0.015f); glutSolidCube(1); glPopMatrix();
+    }
+    glPopMatrix();
+}
+
+void drawBenchShadow(float x, float y, float z) {
+    glPushMatrix();
+    glTranslatef(x, y, z);
+
+    glPushMatrix(); glTranslatef(0, 0.03f, 0); glScalef(0.15f, 0.025f, 0.08f);
+    glutSolidCube(1); glPopMatrix();
+
     float px[] = { -0.06f, 0.06f,-0.06f, 0.06f };
     float pz[] = { 0.03f, 0.03f,-0.03f,-0.03f };
     for (int i = 0; i < 4; i++) {
@@ -335,54 +401,79 @@ void drawLampPost(float x, float y, float z) {
 
 }
 
+void calculateShadowMatrix(float shadowMat[16], float groundPlane[4], float lightPos[4]) {
+    float dot = groundPlane[0] * lightPos[0] +
+        groundPlane[1] * lightPos[1] +
+        groundPlane[2] * lightPos[2] +
+        groundPlane[3] * lightPos[3];
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            shadowMat[i * 4 + j] = -lightPos[j] * groundPlane[i];
+            if (i == j) shadowMat[i * 4 + j] += dot;
+        }
+    }
+}
+
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
-
     updateCamera();
 
     drawSkyBox();
-	drawGrass();
+    drawGrass();
     drawMountain(0.0f, -0.5f, 0.0f, 0.35f, 1.2f);
     drawRoad();
 
-    drawTree(-1.85f, -0.51f, -0.85f, 0.3f, 0.03f);
-    drawTree(-1.23f, -0.51f, 1.2f, 0.3f, 0.03f);
-    drawTree(-0.47f, -0.51f, 1.5f, 0.3f, 0.03f);
-    drawTree(0.56f, -0.51f, 1.45f, 0.3f, 0.03f);
-    drawTree(1.12f, -0.51f, 1.33f, 0.3f, 0.03f);
-    drawTree(-1.23f, -0.51f, -1.2f, 0.3f, 0.03f);
-    drawTree(-0.47f, -0.51f, -1.5f, 0.3f, 0.03f);
-    drawTree(0.56f, -0.51f, -1.45f, 0.3f, 0.03f);
-    drawTree(1.12f, -0.51f, -1.33f, 0.3f, 0.03f);
-    drawTree(1.7f, -0.51f, -1.2f, 0.3f, 0.03f);
-    drawTree(1.5f, -0.51f, -1.5f, 0.3f, 0.03f);
-    drawTree(-1.4f, -0.51f, -1.45f, 0.3f, 0.03f);
-    drawTree(-1.12f, -0.51f, -1.33f, 0.3f, 0.03f);
+    float groundPlane[] = { 0.0f, 1.0f, 0.0f, 0.499f };
+    float shadowMat[16];
 
-    drawBench(0.25f, -0.5f, 0.9f);
-    drawBench(0.7f, -0.5f, 0.9f);
-    drawBench(0.0f, -0.5f, 0.9f);
-    drawBench(-0.25f, -0.5f, 0.9f);
-    drawBench(-0.7f, -0.5f, 0.9f);
-    drawBench(0.25f, -0.5f, -0.9f);
-    drawBench(0.7f, -0.5f, -0.9f);
-    drawBench(0.0f, -0.5f, -0.9f);
-    drawBench(-0.25f, -0.5f, -0.9f);
-    drawBench(-0.7f, -0.5f, -0.9f);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.4f);
 
-    drawLampPost(-1.0f, -0.4f, 0.7f);
-    drawLampPost(1.0f, -0.4f, 0.7f);
-    drawLampPost(-1.0f, -0.4f, 0.2f);
-    drawLampPost(1.0f, -0.4f, 0.2f);
-    drawLampPost(-1.0f, -0.4f, -0.3f);
-    drawLampPost(1.0f, -0.4f, -0.3f);
-    drawLampPost(-1.0f, -0.4f, -0.9f);
-    drawLampPost(1.0f, -0.4f, -0.9f);
-    drawLampPost(-0.4f, -0.4f, -0.9f);
-    drawLampPost(0.4f, -0.4f, -0.9f);
-    drawLampPost(-0.4f, -0.4f, 0.9f);
-    drawLampPost(0.4f, -0.4f, 0.9f);
+    float sunPos[] = { 2.0f, 1.9f, 2.0f, 1.0f };
+    calculateShadowMatrix(shadowMat, groundPlane, sunPos);
+    glPushMatrix();
+    glMultMatrixf(shadowMat);
+    for (auto& pos : treeCoords) drawTreeShadow(pos[0], pos[1], pos[2], 0.3f, 0.03f);
+    for (auto& pos : benchCoords) drawBenchShadow(pos[0], pos[1], pos[2]);
+    glPopMatrix();
+
+    for (int i = 0; i < 3; i++) {
+        float bulbOffset = 0.15f * 0.3f;
+        float bulbHeight = 0.45f * 0.3f;
+        float lights[2][4] = {
+            { lampCoords[i][0] - bulbOffset, lampCoords[i][1] + bulbHeight, lampCoords[i][2], 1.0f },
+            { lampCoords[i][0] + bulbOffset, lampCoords[i][1] + bulbHeight, lampCoords[i][2], 1.0f }
+        };
+
+        for (int j = 0; j < 2; j++) {
+            calculateShadowMatrix(shadowMat, groundPlane, lights[j]);
+            glPushMatrix();
+            glMultMatrixf(shadowMat);
+
+            for (auto& pos : treeCoords) {
+                float dist = sqrt(pow(pos[0] - lights[j][0], 2) + pow(pos[2] - lights[j][2], 2));
+                if (dist < 0.8f) drawTreeShadow(pos[0], pos[1], pos[2], 0.3f, 0.03f);
+            }
+            for (auto& pos : benchCoords) {
+                float dist = sqrt(pow(pos[0] - lights[j][0], 2) + pow(pos[2] - lights[j][2], 2));
+                if (dist < 0.8f) drawBenchShadow(pos[0], pos[1], pos[2]);
+            }
+            glPopMatrix();
+        }
+    }
+    glDisable(GL_BLEND);
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_TEXTURE_2D);
+    glColor3f(1.0f, 1.0f, 1.0f);
+
+    for (auto& pos : treeCoords) drawTree(pos[0], pos[1], pos[2], 0.3f, 0.03f);
+    for (auto& pos : benchCoords) drawBench(pos[0], pos[1], pos[2]);
+    for (auto& pos : lampCoords) drawLampPost(pos[0], pos[1], pos[2]);
 
     glFlush();
     glutSwapBuffers();

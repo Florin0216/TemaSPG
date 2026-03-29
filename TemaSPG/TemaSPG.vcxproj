@@ -107,22 +107,16 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalUsingDirectories>
       </AdditionalUsingDirectories>
-<<<<<<< HEAD
       <AdditionalIncludeDirectories>C:\Users\flori\Downloads\glew-2.3.1-win32\glew-2.3.1\include\GL;C:\Users\flori\Documents\libraries\freeglut\include\GL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-=======
       <AdditionalIncludeDirectories>C:\Users\flori\Documents\libraries\freeglut\include\GL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
->>>>>>> a61360b5c51fdf54d54524e1984a8d8ecb3c3137
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-<<<<<<< HEAD
       <AdditionalLibraryDirectories>C:\Users\flori\Downloads\glew-2.3.1-win32\glew-2.3.1\lib\Release\x64;C:\Users\flori\Documents\libraries\freeglut\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);freeglut.lib;glew32.lib</AdditionalDependencies>
-=======
       <AdditionalLibraryDirectories>C:\Users\flori\Documents\libraries\freeglut\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);freeglut.lib</AdditionalDependencies>
->>>>>>> a61360b5c51fdf54d54524e1984a8d8ecb3c3137
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
