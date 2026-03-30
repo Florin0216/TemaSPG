@@ -22,6 +22,7 @@ GLuint textureTreeTrunk, textureTreeLeaf;
 GLuint textureBenchSeat, textureBenchLeg;
 GLuint texturePole, texturePoleTop;
 GLuint textureCar, textureWheel, textureHeadlight;
+GLuint ballTexture, airplaneTexture;
 
 float carX = 0.0f, carY = -0.50f, carZ = 0.6f;
 float carAngle = 0.0f;
@@ -29,6 +30,9 @@ float carSize = 0.12f;   // Mașina are ~0.25 lungime, deci 0.12 e jumătate
 float treeSize = 0.05f;  // Trunchiul e subțire
 float benchSize = 0.08f; // Banca e puțin mai lată
 float lampSize = 0.04f;
+float ballX = 1.0f, ballY = -0.45f, ballZ = 0.0f; // Poziția inițială
+float ballVX = 0.01f, ballVZ = 0.01f;           // Viteza pe axele X și Z
+float ballRadius = 0.05f;
 
 float treeCoords[][3] = {
     {-1.85f, -0.51f, -0.85f}, {-1.23f, -0.51f, 1.2f}, {-0.47f, -0.51f, 1.5f},
@@ -542,6 +546,94 @@ void drawCar(float x, float y, float z) {
     glPopMatrix();
 }
 
+void drawBall(float x, float y, float z, float radius) {
+    glPushMatrix();
+    glTranslatef(x, y, z);
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, ballTexture);
+    glColor3f(1.0f, 1.0f, 1.0f); // Resetăm culoarea pentru a nu influența textura
+
+    // Creăm un obiect cuadratic pentru a desena sfera
+    GLUquadric* quad = gluNewQuadric();
+
+    // Activăm generarea coordonatelor de textură pe sferă
+    gluQuadricTexture(quad, GL_TRUE);
+    // Activăm calcularea normalelor pentru iluminare corectă (Smooth)
+    gluQuadricNormals(quad, GLU_SMOOTH);
+
+    // Desenăm sfera: (obiect, rază, subdiviziuni meridiane, subdiviziuni paralele)
+    // 32, 32 oferă o rotunjime foarte bună
+    gluSphere(quad, radius, 32, 32);
+
+    // Eliberăm memoria ocupată de obiectul cuadratic
+    gluDeleteQuadric(quad);
+
+    glDisable(GL_TEXTURE_2D);
+    glPopMatrix();
+}
+
+void updateBall(int value) {
+    ballX += ballVX;
+    ballZ += ballVZ;
+
+    if (ballX + ballRadius > 1.9f || ballX - ballRadius < -1.9f) {
+        ballVX = -ballVX;
+    }
+    if (ballZ + ballRadius > 1.9f || ballZ - ballRadius < -1.9f) {
+        ballVZ = -ballVZ;
+    }
+
+    if (rand() % 100 < 2) {
+        ballVX = ((rand() % 100) / 5000.0f) - 0.01f;
+        ballVZ = ((rand() % 100) / 5000.0f) - 0.01f;
+    }
+
+    glutPostRedisplay();
+
+    glutTimerFunc(16, updateBall, 0);
+}
+
+void drawAirplane(float x, float y, float z, float angle) {
+    glPushMatrix();
+    glTranslatef(x, y, z);
+    glRotatef(angle, 0, 1, 0);
+    glScalef(0.6f, 0.6f, 0.6f); 
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, airplaneTexture);
+    glColor3f(1.0f, 1.0f, 1.0f);
+
+    GLUquadric* q = gluNewQuadric();
+    gluQuadricTexture(q, GL_TRUE);
+
+    glPushMatrix();
+    glScalef(1.0f, 1.0f, 4.0f);
+    gluSphere(q, 0.1f, 16, 16);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0.0f, 0.0f, 0.0f);
+    glScalef(2.5f, 0.1f, 0.5f);
+    glutSolidCube(0.2f);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0.0f, 0.0f, -0.35f);
+    glScalef(1.0f, 0.05f, 0.2f);
+    glutSolidCube(0.15f);
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(0.0f, 0.05f, -0.35f);
+    glScalef(0.05f, 1.0f, 0.2f);
+    glutSolidCube(0.15f);
+    glPopMatrix();
+
+    gluDeleteQuadric(q);
+    glDisable(GL_TEXTURE_2D);
+    glPopMatrix();
+}
+
 void calculateShadowMatrix(float shadowMat[16], float groundPlane[4], float lightPos[4]) {
     float dot = groundPlane[0] * lightPos[0] +
         groundPlane[1] * lightPos[1] +
@@ -612,6 +704,12 @@ void display() {
     glEnable(GL_TEXTURE_2D);
     glColor3f(1.0f, 1.0f, 1.0f);
     drawCar(carX, carY, carZ);
+    drawBall(ballX, ballY, ballZ, ballRadius);
+    float time = glutGet(GLUT_ELAPSED_TIME) * 0.001f;
+    float airX = sin(time * 0.5f) * 1.2f;
+    float airZ = cos(time * 0.5f) * 1.2f;
+    float airAngle = (time * 0.5f) * 180.0f / M_PI + 90.0f;
+    drawAirplane(airX, 0.8f, airZ, airAngle);
     for (auto& pos : treeCoords) drawTree(pos[0], pos[1], pos[2], 0.3f, 0.03f);
     for (auto& pos : benchCoords) drawBench(pos[0], pos[1], pos[2]);
     for (auto& pos : lampCoords) drawLampPost(pos[0], pos[1], pos[2]);
@@ -740,12 +838,15 @@ int main(int argc, char** argv) {
     textureCar = loadTexture("textures/car.jpg");
     textureWheel = loadTexture("textures/wheel.jpg");
     textureHeadlight = loadTexture("textures/headlight.jpg");
+    ballTexture = loadTexture("textures/ball.jpg");
+    airplaneTexture = loadTexture("textures/airplane.jpg");
 
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
     glutPassiveMotionFunc(mouseMotion);
     glClearColor(0.2f, 0.5f, 0.8f, 1.0f);
+    glutTimerFunc(16, updateBall, 0);
 	glutMainLoop();
 	return 0;
 }
