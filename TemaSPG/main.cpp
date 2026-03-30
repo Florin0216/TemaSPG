@@ -21,9 +21,15 @@ GLuint textureRoad1, textureRoad2, textureCurve;
 GLuint textureTreeTrunk, textureTreeLeaf;
 GLuint textureBenchSeat, textureBenchLeg;
 GLuint texturePole, texturePoleTop;
-GLuint textureHeadlight;
+GLuint textureCar, textureWheel, textureHeadlight;
 
-// Coordonate Copaci {x, y, z}
+float carX = 0.0f, carY = -0.50f, carZ = 0.6f;
+float carAngle = 0.0f;
+float carSize = 0.12f;   // Mașina are ~0.25 lungime, deci 0.12 e jumătate
+float treeSize = 0.05f;  // Trunchiul e subțire
+float benchSize = 0.08f; // Banca e puțin mai lată
+float lampSize = 0.04f;
+
 float treeCoords[][3] = {
     {-1.85f, -0.51f, -0.85f}, {-1.23f, -0.51f, 1.2f}, {-0.47f, -0.51f, 1.5f},
     {0.56f, -0.51f, 1.45f}, {1.12f, -0.51f, 1.33f}, {-1.23f, -0.51f, -1.2f},
@@ -31,14 +37,12 @@ float treeCoords[][3] = {
     {1.7f, -0.51f, -1.2f}, {1.5f, -0.51f, -1.5f}, {-1.4f, -0.51f, -1.45f}, {-1.12f, -0.51f, -1.33f}
 };
 
-// Coordonate Bănci {x, y, z}
 float benchCoords[][3] = {
     {0.25f, -0.5f, 0.9f}, {0.7f, -0.5f, 0.9f}, {0.0f, -0.5f, 0.9f},
     {-0.25f, -0.5f, 0.9f}, {-0.7f, -0.5f, 0.9f}, {0.25f, -0.5f, -0.9f},
     {0.7f, -0.5f, -0.9f}, {0.0f, -0.5f, -0.9f}, {-0.25f, -0.5f, -0.9f}, {-0.7f, -0.5f, -0.9f}
 };
 
-// Coordonate Stâlpi {x, y, z}
 float lampCoords[][3] = {
     {0.4f, -0.4f, -0.9f}, {-0.4f, -0.4f, 0.9f}, {0.4f, -0.4f, 0.9f}
 };
@@ -65,6 +69,12 @@ GLuint loadTexture(const char* path) {
 	stbi_image_free(data);
     glBindTexture(GL_TEXTURE_2D, 0);
 	return textureID;
+}
+
+bool checkCollision2D(float cx1, float cz1, float halfSize1,
+    float cx2, float cz2, float halfSize2) {
+    return (fabs(cx1 - cx2) < (halfSize1 + halfSize2)) &&
+        (fabs(cz1 - cz2) < (halfSize1 + halfSize2));
 }
 
 void setupLighting() {
@@ -401,6 +411,137 @@ void drawLampPost(float x, float y, float z) {
 
 }
 
+void drawCar(float x, float y, float z) {
+    glPushMatrix();
+
+    // 1. Translația și Rotația (Ordinea contează!)
+    glTranslatef(x, y + 0.05f, z);
+    glRotatef(carAngle, 0.0f, 1.0f, 0.0f); // Rotire pe axa orizontală
+
+    // Activăm normalizarea pentru ca scalarea să nu afecteze intensitatea luminii
+    glEnable(GL_NORMALIZE);
+    glScalef(0.5f, 0.5f, 0.5f);
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, textureCar);
+    glColor3f(1.0f, 1.0f, 1.0f);
+
+    // --- CORPUL INFERIOR AL MAȘINII ---
+    float w1 = 0.12f, h1 = 0.06f, d1 = 0.25f;
+    glBegin(GL_QUADS);
+    // Față
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glTexCoord2f(0, 0); glVertex3f(-w1, -h1, d1);
+    glTexCoord2f(1, 0); glVertex3f(w1, -h1, d1);
+    glTexCoord2f(1, 1); glVertex3f(w1, h1, d1);
+    glTexCoord2f(0, 1); glVertex3f(-w1, h1, d1);
+    // Spate
+    glNormal3f(0.0f, 0.0f, -1.0f);
+    glTexCoord2f(0, 0); glVertex3f(w1, -h1, -d1);
+    glTexCoord2f(1, 0); glVertex3f(-w1, -h1, -d1);
+    glTexCoord2f(1, 1); glVertex3f(-w1, h1, -d1);
+    glTexCoord2f(0, 1); glVertex3f(w1, h1, -d1);
+    // Sus
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glTexCoord2f(0, 0); glVertex3f(-w1, h1, d1);
+    glTexCoord2f(1, 0); glVertex3f(w1, h1, d1);
+    glTexCoord2f(1, 1); glVertex3f(w1, h1, -d1);
+    glTexCoord2f(0, 1); glVertex3f(-w1, h1, -d1);
+    // Jos
+    glNormal3f(0.0f, -1.0f, 0.0f);
+    glTexCoord2f(0, 0); glVertex3f(-w1, -h1, -d1);
+    glTexCoord2f(1, 0); glVertex3f(w1, -h1, -d1);
+    glTexCoord2f(1, 1); glVertex3f(w1, -h1, d1);
+    glTexCoord2f(0, 1); glVertex3f(-w1, -h1, d1);
+    // Stânga
+    glNormal3f(-1.0f, 0.0f, 0.0f);
+    glTexCoord2f(0, 0); glVertex3f(-w1, -h1, -d1);
+    glTexCoord2f(1, 0); glVertex3f(-w1, -h1, d1);
+    glTexCoord2f(1, 1); glVertex3f(-w1, h1, d1);
+    glTexCoord2f(0, 1); glVertex3f(-w1, h1, -d1);
+    // Dreapta
+    glNormal3f(1.0f, 0.0f, 0.0f);
+    glTexCoord2f(0, 0); glVertex3f(w1, -h1, d1);
+    glTexCoord2f(1, 0); glVertex3f(w1, -h1, -d1);
+    glTexCoord2f(1, 1); glVertex3f(w1, h1, -d1);
+    glTexCoord2f(0, 1); glVertex3f(w1, h1, d1);
+    glEnd();
+
+    // --- CABINA (PARTEA DE SUS) ---
+    float w2 = 0.10f, h2 = 0.06f, d2 = 0.12f;
+    glPushMatrix();
+    glTranslatef(0.0f, h1 + h2 - 0.01f, -0.05f);
+    glBegin(GL_QUADS);
+    // Față cabina
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glTexCoord2f(0, 0); glVertex3f(-w2, -h2, d2); glTexCoord2f(1, 0); glVertex3f(w2, -h2, d2);
+    glTexCoord2f(1, 1); glVertex3f(w2, h2, d2); glTexCoord2f(0, 1); glVertex3f(-w2, h2, d2);
+    // Spate cabina
+    glNormal3f(0.0f, 0.0f, -1.0f);
+    glTexCoord2f(0, 0); glVertex3f(w2, -h2, -d2); glTexCoord2f(1, 0); glVertex3f(-w2, -h2, -d2);
+    glTexCoord2f(1, 1); glVertex3f(-w2, h2, -d2); glTexCoord2f(0, 1); glVertex3f(w2, h2, -d2);
+    // Sus cabina
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glTexCoord2f(0, 0); glVertex3f(-w2, h2, d2); glTexCoord2f(1, 0); glVertex3f(w2, h2, d2);
+    glTexCoord2f(1, 1); glVertex3f(w2, h2, -d2); glTexCoord2f(0, 1); glVertex3f(-w2, h2, -d2);
+    // Jos (nu prea se vede, dar e bine să aibă normală)
+    glNormal3f(0.0f, -1.0f, 0.0f);
+    glTexCoord2f(0, 0); glVertex3f(-w2, -h2, -d2); glTexCoord2f(1, 0); glVertex3f(w2, -h2, -d2);
+    glTexCoord2f(1, 1); glVertex3f(w2, -h2, d2); glTexCoord2f(0, 1); glVertex3f(-w2, -h2, d2);
+    // Stânga cabina
+    glNormal3f(-1.0f, 0.0f, 0.0f);
+    glTexCoord2f(0, 0); glVertex3f(-w2, -h2, -d2); glTexCoord2f(1, 0); glVertex3f(-w2, -h2, d2);
+    glTexCoord2f(1, 1); glVertex3f(-w2, h2, d2); glTexCoord2f(0, 1); glVertex3f(-w2, h2, -d2);
+    // Dreapta cabina
+    glNormal3f(1.0f, 0.0f, 0.0f);
+    glTexCoord2f(0, 0); glVertex3f(w2, -h2, d2); glTexCoord2f(1, 0); glVertex3f(w2, -h2, -d2);
+    glTexCoord2f(1, 1); glVertex3f(w2, h2, -d2); glTexCoord2f(0, 1); glVertex3f(w2, h2, d2);
+    glEnd();
+    glPopMatrix();
+
+    // --- ROȚI ---
+    glBindTexture(GL_TEXTURE_2D, textureWheel);
+    GLUquadric* q = gluNewQuadric();
+    gluQuadricTexture(q, GL_TRUE);
+
+    float wheelX = 0.13f, wheelY = -0.05f, wheelZ = 0.16f;
+    float positions[4][3] = { {wheelX, wheelY, wheelZ}, {-wheelX, wheelY, wheelZ},
+                              {wheelX, wheelY, -wheelZ}, {-wheelX, wheelY, -wheelZ} };
+
+    for (int i = 0; i < 4; i++) {
+        glPushMatrix();
+        glTranslatef(positions[i][0], positions[i][1], positions[i][2]);
+        // Orientăm roata (normala cilindrului se calculează automat în gluCylinder)
+        glRotatef(90, 0, 1, 0);
+        glTranslatef(0, 0, -0.02f);
+        gluCylinder(q, 0.05f, 0.05f, 0.04f, 16, 16);
+
+        // Capacele roților (necesită normale pentru iluminare corectă)
+        glNormal3f(0, 0, -1);
+        gluDisk(q, 0, 0.05f, 16, 1);
+        glTranslatef(0, 0, 0.04f);
+        glNormal3f(0, 0, 1);
+        gluDisk(q, 0, 0.05f, 16, 1);
+        glPopMatrix();
+    }
+
+    // --- FARURI ---
+    glBindTexture(GL_TEXTURE_2D, textureHeadlight);
+    glPushMatrix();
+    glTranslatef(-0.07f, 0.0f, d1 + 0.01f);
+    gluSphere(q, 0.025f, 10, 10);
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(0.07f, 0.0f, d1 + 0.01f);
+    gluSphere(q, 0.025f, 10, 10);
+    glPopMatrix();
+
+    gluDeleteQuadric(q);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_NORMALIZE);
+    glPopMatrix();
+}
+
 void calculateShadowMatrix(float shadowMat[16], float groundPlane[4], float lightPos[4]) {
     float dot = groundPlane[0] * lightPos[0] +
         groundPlane[1] * lightPos[1] +
@@ -470,7 +611,7 @@ void display() {
     glEnable(GL_LIGHTING);
     glEnable(GL_TEXTURE_2D);
     glColor3f(1.0f, 1.0f, 1.0f);
-
+    drawCar(carX, carY, carZ);
     for (auto& pos : treeCoords) drawTree(pos[0], pos[1], pos[2], 0.3f, 0.03f);
     for (auto& pos : benchCoords) drawBench(pos[0], pos[1], pos[2]);
     for (auto& pos : lampCoords) drawLampPost(pos[0], pos[1], pos[2]);
@@ -480,6 +621,9 @@ void display() {
 }
 
 void keyboard(unsigned char key, int x, int y) {
+    float cameraSpeed = 0.05f;
+    float step = 0.05f;
+    float rotateStep = 5.0f;
     if (key == 27) { glutLeaveMainLoop(); return; }
 
     float nx = cameraPosX, nz = cameraPosZ, ny = cameraPosY;
@@ -495,6 +639,66 @@ void keyboard(unsigned char key, int x, int y) {
     if (nx > -1.99f && nx < 1.99f) cameraPosX = nx;
     if (nz > -1.99f && nz < 1.99f) cameraPosZ = nz;
     if (ny > -0.48f && ny < 1.99f) cameraPosY = ny;
+
+    float origCarX = carX;
+    float origCarY = carY;
+    float origCarZ = carZ;
+
+    if (key == 'i') {
+        carZ -= step;
+    }
+    if (key == 'j') {
+        carZ += step;
+    }
+    if (key == 'k') {
+        carX -= step;
+    }
+    if (key == 'l') {
+        carX += step;
+    }
+    if (key == 'u') carAngle += rotateStep;
+    if (key == 'o') carAngle -= rotateStep;
+
+    bool collision = false;
+    if (carX < -1.9f || carX > 1.9f || carZ < -1.9f || carZ > 1.9f) {
+        collision = true;
+    }
+
+    // 2. Coliziune cu Copacii
+    for (int i = 0; i < 13; i++) {
+        if (checkCollision2D(carX, carZ, carSize, treeCoords[i][0], treeCoords[i][2], treeSize)) {
+            collision = true;
+            break;
+        }
+    }
+
+    // 3. Coliziune cu Băncile
+    if (!collision) { // Verificăm doar dacă nu am găsit deja o coliziune
+        for (int i = 0; i < 10; i++) {
+            if (checkCollision2D(carX, carZ, carSize, benchCoords[i][0], benchCoords[i][2], benchSize)) {
+                collision = true;
+                break;
+            }
+        }
+    }
+
+    // 4. Coliziune cu Stâlpii
+    if (!collision) {
+        for (int i = 0; i < 3; i++) {
+            if (checkCollision2D(carX, carZ, carSize, lampCoords[i][0], lampCoords[i][2], lampSize)) {
+                collision = true;
+                break;
+            }
+        }
+    }
+
+    if (collision) {
+        carX = origCarX;
+        carY = origCarY;
+        carZ = origCarZ;
+    }
+
+
 
     glutPostRedisplay();
 }
@@ -533,6 +737,8 @@ int main(int argc, char** argv) {
     textureBenchSeat = loadTexture("textures/bench.jpg");
     texturePole = loadTexture("textures/lamp_pole.jpg");
     texturePoleTop = loadTexture("textures/lamp_pole.jpg");
+    textureCar = loadTexture("textures/car.jpg");
+    textureWheel = loadTexture("textures/wheel.jpg");
     textureHeadlight = loadTexture("textures/headlight.jpg");
 
 	glutDisplayFunc(display);
